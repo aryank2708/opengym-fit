@@ -23,7 +23,9 @@ export const DEF = {
   coach: null,
   // Saturday check-ins: { d, t, w (kg), neck, waist, hips, chest, bicep (inches) }, newest last.
   // meals: { 'YYYY-MM-DD': { 1: { c: kcal, x: ticked }, … 5 } }; calGoal: daily kcal target or null.
-  checkins: [], meals: {}, calGoal: null
+  checkins: [], meals: {}, calGoal: null,
+  // display name shown on Home; falls back to the account's email prefix when empty
+  name: ''
 }
 const clone = o => JSON.parse(JSON.stringify(o))
 

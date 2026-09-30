@@ -16,6 +16,21 @@ import { forgetCoach } from '../lib/coach-api.js'
 import Icon from '../components/Icon.jsx'
 import { Section, Row, SelectRow, Switch, Segmented, Button, TextField } from '../components/ui.jsx'
 
+function NameSheet({ close }) {
+  const S = useStore(s => s.S)
+  const update = useStore(s => s.update)
+  const user = useStore(s => s.user)
+  const [v, setV] = useState(S.name || user?.name || '')
+  const save = () => { update(st => { st.name = v.trim().slice(0, 40) }); close() }
+  return <>
+    <h3>{t('Your name')}</h3>
+    <div className="muted small" style={{ marginBottom: 12 }}>{t('Shown on the Home screen. Synced to your account.')}</div>
+    <TextField autoFocus value={v} maxLength={40} placeholder={t('Your name')} onChange={e => setV(e.target.value)} onKeyDown={e => e.key === 'Enter' && save()} />
+    <div style={{ height: 12 }} />
+    <Button variant="primary" onClick={save}>{t('Save')}</Button>
+  </>
+}
+
 export default function Settings() {
   const nav = useNavigate()
   const S = useStore(s => s.S)
@@ -88,7 +103,9 @@ export default function Settings() {
         <Row icon="rocket" iconTint="var(--indigo)" title={t('Self-host openGym')} subtitle={t('Passkey sign-in, sync across your devices, your own data.')} accessory="chevron"
           onClick={() => window.open(REPO, '_blank', 'noopener')} />
       </> : user ? <>
-        <Row icon="personCircle" iconTint="var(--grey)" title={user.name} subtitle={user.email ? user.email + ' · ' + t('data syncs automatically.') : t('Signed in with passkey — data syncs to this profile.')} />
+        <Row icon="personCircle" iconTint="var(--grey)" title={S.name || user.name} accessory="chevron"
+          subtitle={user.email ? user.email + ' · ' + t('tap to change your name') : t('Signed in with passkey — data syncs to this profile.')}
+          onClick={() => useUI.getState().openSheet(close => <NameSheet close={close} />)} />
         {user.admin && <Row icon="wrench" iconTint="var(--indigo)" title={t('Admin dashboard')} accessory="chevron" onClick={() => nav('/admin')} />}
         <Row icon="signOut" iconTint="var(--red)" title={t('Sign out')} danger onClick={() => confirmSheet({ title: t('Sign out?'), message: t('Your data is synced to your profile first, then cleared from this device.'), confirmText: t('Sign out'), danger: true, onConfirm: () => { signOut(); nav('/home') } })} />
         <Row icon="shield" iconTint="var(--red)" title={t('Sign out everywhere')} subtitle={t('Ends this profile’s sessions on all your devices.')} danger onClick={signOutEverywhere} />
