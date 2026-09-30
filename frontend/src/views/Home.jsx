@@ -13,6 +13,7 @@ import { coachAvailable, hasConsent } from '../lib/coach.js'
 import { useCoachStatus } from '../lib/coach-api.js'
 import { DEMO } from '../lib/demo.js'
 import { MOBILE } from '../lib/mobile.js'
+import { checkinStatus, dayKcal } from '../lib/tracking.js'
 
 // A job in flight or a proposal waiting is the only reason the Coach interrupts Home. When it
 // has nothing to say it renders nothing at all — and it only polls while Home is on screen.
@@ -79,7 +80,10 @@ export default function Home() {
   return <div className="narrow">
     <div className="hdr">
       <div><h1>{user ? t('Hi {0}', user.name) : 'openGym'}</h1><div className="sub">{today.toLocaleDateString(dateLocale(), { weekday: 'long', day: 'numeric', month: 'long' })}</div></div>
-      <button className="iconbtn" onClick={() => nav('/settings')} aria-label={t('Settings')}><Icon name="gear" /></button>
+      <div className="row" style={{ gap: 6 }}>
+        <button className="iconbtn" onClick={() => nav('/plan')} aria-label={t('Plan')}><Icon name="calendar" /></button>
+        <button className="iconbtn" onClick={() => nav('/settings')} aria-label={t('Settings')}><Icon name="gear" /></button>
+      </div>
     </div>
 
     <div className="card">
@@ -104,6 +108,36 @@ export default function Home() {
           : <Icon name="plus" className="chev" />}
       </div>
     </div>
+
+    {(() => {
+      const st = checkinStatus(S), k = dayKcal(S, todayISO()), lc = (S.checkins || []).slice(-1)[0]
+      return <>
+        <div className={'card' + (st !== 'done' ? ' hot' : '')}>
+          <div className="today-row" onClick={() => nav('/checkin')}>
+            <div className="row" style={{ gap: 9, minWidth: 0 }}>
+              <span className="lrow-i" style={{ background: st !== 'done' ? 'var(--acc)' : 'var(--surface-3)' }}><Icon name="ruler" /></span>
+              <div style={{ minWidth: 0 }}>
+                <div className="lbl2">{t('Saturday check-in')}</div>
+                <div className="ttl">{st === 'today' ? t('Due today') : st === 'missed' ? t('Missed — log it now') : lc ? t('Done · last {0}', fmtDate(lc.d)) : t('Done')}</div>
+              </div>
+            </div>
+            {st !== 'done' ? <span className="tag acc">{t('Log')}</span> : <Icon name="chevronRight" className="chev" />}
+          </div>
+        </div>
+        <div className="card">
+          <div className="today-row" onClick={() => nav('/meals')}>
+            <div className="row" style={{ gap: 9, minWidth: 0 }}>
+              <span className="lrow-i" style={{ background: k.ticked === 5 ? 'var(--acc)' : 'var(--surface-3)' }}><Icon name="fork" /></span>
+              <div style={{ minWidth: 0 }}>
+                <div className="lbl2">{t('Meals today')}</div>
+                <div className="ttl">{k.ticked} / 5 · {k.eaten.toLocaleString()} kcal{S.calGoal ? ' / ' + S.calGoal.toLocaleString() : ''}</div>
+              </div>
+            </div>
+            <Icon name="chevronRight" className="chev" />
+          </div>
+        </div>
+      </>
+    })()}
 
     {coachOn && <CoachCard nav={nav} />}
 

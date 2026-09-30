@@ -19,21 +19,21 @@
 /* ---------------------------------------------------------------- tokens -- */
 :root {
   /* surfaces — dark is the default */
-  --bg:        #000000;
-  --bg-el:     #0e0e10;   /* elevated backdrop (sheets, bars) */
-  --surface:   #1c1c1e;   /* card / grouped-list fill */
-  --surface-2: #2c2c2e;   /* pressed + nested fill */
-  --surface-3: #3a3a3c;   /* controls (segmented track, switch off) */
+  --bg:        #100e0d;
+  --bg-el:     #161312;   /* elevated backdrop (sheets, bars) */
+  --surface:   #1c1917;   /* card / grouped-list fill */
+  --surface-2: #26221f;   /* pressed + nested fill */
+  --surface-3: #332e2a;   /* controls (segmented track, switch off) */
 
   /* text */
-  --label:     #ffffff;
-  --label-2:   rgba(235,235,245,.60);
-  --label-3:   rgba(235,235,245,.32);
-  --label-4:   rgba(235,235,245,.18);
+  --label:     #faf7f5;
+  --label-2:   rgba(250,244,240,.62);
+  --label-3:   rgba(250,244,240,.34);
+  --label-4:   rgba(250,244,240,.18);
 
   /* lines */
-  --sep:       rgba(84,84,88,.60);
-  --sep-op:    rgba(84,84,88,.34);   /* for edges sitting over blur */
+  --sep:       rgba(120,100,90,.42);
+  --sep-op:    rgba(120,100,90,.28);   /* for edges sitting over blur */
   --hair:      .5px;
 
   /* system palette (iOS dark values) */
@@ -42,9 +42,9 @@
   --purple:#bf5af2; --mint:#63e6e2; --brown:#ac8e68; --grey:#8e8e93;
 
   /* accent (per-account, synced) */
-  --acc:  var(--green);
-  --acc-2:#248a3d;
-  --on-acc:#000000;
+  --acc:  #ff5a1f;
+  --acc-2:#d94410;
+  --on-acc:#100e0d;
   --acc-soft: color-mix(in srgb, var(--acc) 16%, transparent);
   --acc-line: color-mix(in srgb, var(--acc) 38%, transparent);
 
@@ -62,13 +62,13 @@
 }
 
 :root[data-theme="light"] {
-  --bg:        #f2f2f7;
-  --bg-el:     #f7f7fa;
+  --bg:        #f4f2ed;
+  --bg-el:     #f8f6f2;
   --surface:   #ffffff;
-  --surface-2: #ececef;
-  --surface-3: #e3e3e8;
+  --surface-2: #eeebe5;
+  --surface-3: #e4e0d9;
 
-  --label:     #000000;
+  --label:     #151312;
   --label-2:   rgba(60,60,67,.60);
   --label-3:   rgba(60,60,67,.30);
   --label-4:   rgba(60,60,67,.16);
@@ -84,6 +84,7 @@
 }
 
 /* accents — Apple's system colours, so a recolour never looks off-system */
+:root[data-accent="ember"] { --acc:#ff5a1f; --acc-2:#d94410; --on-acc:#100e0d }
 :root[data-accent="lime"]  { --acc:var(--green);  --acc-2:#248a3d; --on-acc:#000 }
 :root[data-accent="sky"]   { --acc:var(--blue);   --acc-2:#0060df; --on-acc:#fff }
 :root[data-accent="orange"]{ --acc:var(--orange); --acc-2:#c76b00; --on-acc:#000 }
@@ -98,6 +99,7 @@
    DEFAULT accent, so every primary button in light mode was failing. Black scores
    9.46 / 8.16 there. Blue, purple, pink and red keep white (3.5–4.1:1), which both
    passes and matches the platform convention. */
+:root[data-theme="light"][data-accent="ember"] { --on-acc:#fff; --acc:#f2511f }
 :root[data-theme="light"][data-accent="lime"],
 :root[data-theme="light"][data-accent="teal"]  { --on-acc:#000 }
 :root[data-theme="light"][data-accent="sky"],
@@ -913,3 +915,57 @@ h4.sec{
   .exmedia img{height:380px}
   .hm-wrap{display:flex;flex-direction:column;align-items:center}
 }
+
+
+/* ------------------------------------------------------- ember refresh -- */
+/* Bold condensed display face for headlines and big numbers; falls back to the system face. */
+:root{--display:'Barlow Condensed','SF Pro Display',-apple-system,system-ui,sans-serif}
+.hdr h1,.card .big,.bw-read,.tile .v,.mealtot .v,.ckv{font-family:var(--display);letter-spacing:.005em;text-transform:none}
+.hdr h1{font-size:40px;font-weight:700}
+.card .big{font-size:38px;font-weight:700}
+.card{border:1px solid color-mix(in srgb,var(--label) 6%,transparent);border-radius:18px}
+.card.hot{border-color:var(--acc);background:linear-gradient(180deg,color-mix(in srgb,var(--acc) 12%,var(--surface)),var(--surface))}
+#tabbar button.on{color:var(--acc)}
+.btn.primary{box-shadow:0 8px 22px -10px color-mix(in srgb,var(--acc) 70%,transparent)}
+
+/* meals */
+.meal{display:flex;align-items:center;gap:12px;padding:10px 0}
+.meal+.meal{border-top:var(--hair) solid var(--sep)}
+.meal .mk{width:44px;height:44px;border-radius:14px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:700;font-size:20px;color:var(--label-2);flex:none}
+.meal .cal{flex:1;display:flex;align-items:baseline;gap:6px;min-width:0}
+.meal .cal input{width:100%;max-width:120px;background:var(--surface-2);border:1px solid transparent;border-radius:12px;padding:10px 12px;font-size:20px;font-weight:600;text-align:right}
+.meal .cal input:focus{border-color:var(--acc);outline:none}
+.meal .cal span{color:var(--label-3);font-size:14px}
+.tick{width:46px;height:46px;border-radius:50%;border:2px solid var(--label-4);display:flex;align-items:center;justify-content:center;font-size:24px;color:transparent;flex:none;transition:all var(--fast) var(--ease)}
+.tick:active{transform:scale(.9)}
+.tick.on{background:var(--acc);border-color:var(--acc);color:var(--on-acc);--icon-stroke:3}
+.meal.done .mk{background:var(--acc-soft);color:var(--acc)}
+.mealtot{display:flex;align-items:baseline;gap:8px}
+.mealtot .v{font-size:46px;font-weight:700;line-height:1}
+.pbar{height:8px;border-radius:4px;background:var(--surface-3);overflow:hidden;margin-top:10px}
+.pbar>i{display:block;height:100%;border-radius:4px;background:var(--acc);transition:width var(--med) var(--ease)}
+.pbar>i.over{background:var(--red)}
+.daynav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.wkbars{display:flex;gap:6px;align-items:flex-end;height:64px;margin-top:8px}
+.wkbars div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;height:100%;font-size:11px;color:var(--label-3)}
+.wkbars b{display:block;width:100%;border-radius:5px;background:var(--surface-3);min-height:3px}
+.wkbars .t b{background:var(--acc)}
+
+/* check-in */
+.ckgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ckf{background:var(--surface-2);border-radius:14px;padding:10px 12px}
+.ckf label{display:block;font-size:12px;color:var(--label-2);margin-bottom:2px}
+.ckf .in{display:flex;align-items:baseline;gap:5px}
+.ckf input{width:100%;background:none;border:none;font-family:var(--display);font-size:28px;font-weight:700;color:var(--label)}
+.ckf input:focus{outline:none}
+.ckf:focus-within{box-shadow:0 0 0 1.5px var(--acc)}
+.ckf .u{color:var(--label-3);font-size:13px}
+.ckrow{display:flex;align-items:center;gap:10px;padding:11px 0}
+.ckrow+.ckrow{border-top:var(--hair) solid var(--sep)}
+.ckrow .n{flex:1;font-size:16px}
+.ckrow .n small{display:block;color:var(--label-3);font-size:12px}
+.ckv{font-size:26px;font-weight:700}
+.dl{font-size:13px;font-weight:600;display:flex;align-items:center;gap:2px;min-width:64px;justify-content:flex-end}
+.dl .icn{font-size:12px}
+.dl.good{color:var(--green)}.dl.bad{color:var(--orange)}.dl.flat{color:var(--label-3)}
+.today-row .ttl,.ckrow .n,.meal,.ckf label{text-transform:none}

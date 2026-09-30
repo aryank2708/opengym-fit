@@ -4,11 +4,12 @@ import { localTZ } from '../lib/format.js'
 import { registerCustom } from '../lib/exercises.js'
 import { DEMO, DEMO_SEEDED } from '../lib/demo.js'
 import { MOBILE, nativeLoad, nativeSave, syncReminder } from '../lib/mobile.js'
+import { CLOUD, cloudUser, pullCloud, pushCloud, signOutCloud } from '../lib/cloud.js'
 
 const KEY = 'gym_state_v1'
 export const DEF = {
   unit: 'kg', restSec: 90, sound: true, keepAwake: true, lang: 'en',
-  theme: 'dark', accent: 'lime', body: 'male', targetW: null,
+  theme: 'dark', accent: 'ember', body: 'male', targetW: null,
   bodyweight: [], routines: [], week: {}, dayPlan: {},
   exWeights: {}, workouts: [], active: null, customEx: [], gifSize: 'full',
   // effort: which per-set effort scale is logged — 'none' | 'rir' | 'rpe'. null, not 'none', so
@@ -19,7 +20,10 @@ export const DEF = {
   // AI Coach (issue: AI enablement). null until the profile opts in — a null namespace is the
   // same app it was before the feature existed, which is what Epic F asks for. Shape and
   // bounds live in lib/coach.js.
-  coach: null
+  coach: null,
+  // Saturday check-ins: { d, t, w (kg), neck, waist, hips, chest, bicep (inches) }, newest last.
+  // meals: { 'YYYY-MM-DD': { 1: { c: kcal, x: ticked }, … 5 } }; calGoal: daily kcal target or null.
+  checkins: [], meals: {}, calGoal: null
 }
 const clone = o => JSON.parse(JSON.stringify(o))
 
@@ -31,7 +35,7 @@ function loadState() {
   return clone(DEF)
 }
 
-const hasData = st => !!((st.workouts || []).length || (st.routines || []).length || (st.bodyweight || []).length)
+const hasData = st => !!((st.workouts || []).length || (st.routines || []).length || (st.bodyweight || []).length || (st.checkins || []).length || Object.keys(st.meals || {}).length)
 
 export const useStore = create((set, get) => {
   let pushTm = null
@@ -112,12 +116,15 @@ export const useStore = create((set, get) => {
     async pushState() {
       if (!get().user) return
       clearTimeout(pushTm)
-      try { await api('/api/data', { method: 'PUT', body: JSON.stringify({ state: get().S }) }); localStorage.removeItem('gym_dirty') }
+      try {
+        if (CLOUD) await pushCloud(get().S); else await api('/api/data', { method: 'PUT', body: JSON.stringify({ state: get().S }) })
+        localStorage.removeItem('gym_dirty')
+      }
       catch (e) { localStorage.setItem('gym_dirty', '1') }
     },
     async pullState() {
       try {
-        const { state } = await api('/api/data')
+        const state = CLOUD ? await pullCloud() : (await api('/api/data')).state
         const S = get().S
         const dirty = localStorage.getItem('gym_dirty') === '1'
         if (state && (!hasData(S) || ((state._ts || 0) >= (S._ts || 0) && !dirty))) {
@@ -130,7 +137,8 @@ export const useStore = create((set, get) => {
     },
 
     async signOut() {
-      try { await get().pushState(); await api('/api/logout', { method: 'POST', body: '{}' }) } catch (e) { /* */ }
+      try { await get().pushState(); if (CLOUD) signOutCloud(); else await api('/api/logout', { method: 'POST', body: '{}' }) } catch (e) { /* */ }
+      if (CLOUD) signOutCloud()
       clearLocalSession()
     },
 
@@ -141,7 +149,7 @@ export const useStore = create((set, get) => {
     // would sign the user out of the one place the bump didn't reach. Caller reports the error.
     async signOutAll() {
       await get().pushState()   // never throws — stores gym_dirty and moves on when offline
-      await api('/api/logout/all', { method: 'POST', body: '{}' })
+      if (CLOUD) signOutCloud(); else await api('/api/logout/all', { method: 'POST', body: '{}' })
       clearLocalSession()
     },
 
@@ -177,6 +185,17 @@ export const useStore = create((set, get) => {
           await get().resetDemo()
         }
         get().setGuest(true)
+        set({ ready: true })
+        return
+      }
+      // Cloud build: Supabase session lives in localStorage; pull once we know who we are.
+      if (CLOUD) {
+        const u = cloudUser()
+        if (u) {
+          get().setUser(u)
+          set({ ready: true })
+          await get().pullState()
+        } else get().setUser(null)
         set({ ready: true })
         return
       }

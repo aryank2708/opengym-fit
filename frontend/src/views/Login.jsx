@@ -4,6 +4,7 @@ import { webauthnOK, passkeyLogin, passkeyRegister, api, BIO } from '../lib/api.
 import { hasData } from '../store/useStore.js'
 import { t } from '../lib/i18n.js'
 import { DEMO, REPO } from '../lib/demo.js'
+import { CLOUD, signIn as cloudSignIn, signUp as cloudSignUp } from '../lib/cloud.js'
 import { useState, useRef, useEffect } from 'react'
 import Icon from '../components/Icon.jsx'
 import { Button } from '../components/ui.jsx'
@@ -42,7 +43,44 @@ function RegisterSheet({ close }) {
   </>
 }
 
+function CloudLogin() {
+  const { setUser, pullState, pushState } = useStore()
+  const [email, setEmail] = useState('')
+  const [pw, setPw] = useState('')
+  const [mode, setMode] = useState('in')
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState('')
+  const go = async () => {
+    const e = email.trim()
+    if (!e || pw.length < 6) { setMsg(t('Enter your email and a password of at least 6 characters')); return }
+    setBusy(true); setMsg('')
+    try {
+      const r = mode === 'in' ? await cloudSignIn(e, pw) : await cloudSignUp(e, pw)
+      if (r.needsConfirm) { setMsg(t('Check your email to confirm the account, then sign in.')); setMode('in'); return }
+      setUser(r.user)
+      if (hasData(useStore.getState().S)) await pushState(); else await pullState()
+      await pullState()
+    } catch (err) { setMsg(err.message || t('Sign-in failed')) }
+    finally { setBusy(false) }
+  }
+  return <div className="narrow" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: '78vh', textAlign: 'center' }}>
+    <div style={{ fontSize: 54, display: 'flex', justifyContent: 'center', color: 'var(--acc)' }}><Icon name="dumbbell" /></div>
+    <h1 style={{ fontSize: 44, fontWeight: 700, margin: '10px 0 4px', fontFamily: 'var(--display)' }}>openGym</h1>
+    <div className="muted" style={{ marginBottom: 26 }}>{t('Sign in once — your data syncs automatically.')}</div>
+    <input className="input" type="email" autoComplete="email" placeholder={t('Email')} value={email} onChange={e => setEmail(e.target.value)} />
+    <div style={{ height: 10 }} />
+    <input className="input" type="password" autoComplete={mode === 'in' ? 'current-password' : 'new-password'} placeholder={t('Password')} value={pw}
+      onChange={e => setPw(e.target.value)} onKeyDown={e => e.key === 'Enter' && go()} />
+    {msg && <div className="small" style={{ color: 'var(--orange)', marginTop: 10 }}>{msg}</div>}
+    <div style={{ height: 14 }} />
+    <Button variant="primary" onClick={go}>{busy ? '…' : mode === 'in' ? t('Sign in') : t('Create account')}</Button>
+    <div style={{ height: 6 }} />
+    <Button variant="ghost" onClick={() => { setMode(mode === 'in' ? 'up' : 'in'); setMsg('') }}>{mode === 'in' ? t('New here? Create an account') : t('Have an account? Sign in')}</Button>
+  </div>
+}
+
 export default function Login() {
+  if (CLOUD) return <CloudLogin />
   const { setUser, pullState, setGuest } = useStore()
   const signIn = async () => {
     try { const u = await passkeyLogin(); setUser(u); await pullState(); useUI.getState().toast(t('Welcome back, {0}', u.name)) }
